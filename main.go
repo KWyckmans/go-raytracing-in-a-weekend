@@ -8,32 +8,15 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-func hitSphere(center mgl32.Vec3, radius float32, r Ray) float32 {
-	var oc mgl32.Vec3 = r.Origin().Sub(center)
+func color(r Ray, world Hitable) mgl32.Vec3 {
+	var rec HitRecord
+	if world.hit(r, 0.0, math.MaxFloat32, &rec) {
 
-	var a float32 = r.Direction().Dot(r.Direction())
-	var b float32 = 2 * oc.Dot(r.Direction())
-	var c float32 = oc.Dot(oc) - radius*radius
-
-	var discriminant float32 = b*b - 4*a*c
-
-	if discriminant < 0 {
-		return -1.0
-	} else {
-		return (-b - float32(math.Sqrt(float64(discriminant)))) / (2 * a)
-	}
-}
-
-func color(r Ray) mgl32.Vec3 {
-	var t float32 = hitSphere(mgl32.Vec3{0, 0, -1}, 0.5, r)
-
-	if t > 0 {
-		var N mgl32.Vec3 = r.P(t).Sub(mgl32.Vec3{0, 0, -1}).Normalize()
-		return mgl32.Vec3{N.X() + 1, N.Y() + 1, N.Z() + 1}.Mul(0.5)
+		return mgl32.Vec3{rec.normal.X() + 1, rec.normal.Y() + 1, rec.normal.Z() + 1}.Mul(0.5)
 	}
 
 	var unitDirection = r.Direction().Normalize()
-	t = float32(0.5) * (unitDirection.Y() + 1)
+	var t float32 = float32(0.5) * (unitDirection.Y() + 1)
 	return mgl32.Vec3{1, 1, 1}.Mul((1 - t)).Add(mgl32.Vec3{0.5, 0.7, 1.0}.Mul(t))
 }
 
@@ -57,13 +40,18 @@ func main() {
 	contents += fmt.Sprintln(nx, ny)
 	contents += fmt.Sprintln(255)
 
+	var list []Hitable
+	list = append(list, Sphere{center: mgl32.Vec3{0, 0, -1}, radius: 0.5})
+	list = append(list, Sphere{center: mgl32.Vec3{0, -100.5, -1}, radius: 100})
+	var world HitableList = HitableList{list: list}
+
 	for j := ny - 1; j >= 0; j-- {
 		for i := 0; i < nx; i++ {
 			var u = float32(i) / float32(nx)
 			var v = float32(j) / float32(ny)
 
 			var r = Ray{origin, lowerLeftCorner.Add(horizontal.Mul(u)).Add(vertical.Mul(v))}
-			var col = color(r)
+			var col = color(r, world)
 
 			var ir = int(255.99 * col[0])
 			var ig = int(255.99 * col[1])
