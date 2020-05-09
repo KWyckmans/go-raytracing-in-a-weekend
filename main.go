@@ -11,9 +11,9 @@ import (
 
 func color(r Ray, world Hitable) mgl32.Vec3 {
 	var rec HitRecord
-	if world.hit(r, 0.0, math.MaxFloat32, &rec) {
-
-		return mgl32.Vec3{rec.normal.X() + 1, rec.normal.Y() + 1, rec.normal.Z() + 1}.Mul(0.5)
+	if world.hit(r, 0.001, math.MaxFloat32, &rec) {
+		var target mgl32.Vec3 = rec.p.Add(rec.normal).Add(randInUnitSpehre())
+		return color(Ray{A: rec.p, B: target.Sub(rec.p)}, world).Mul(0.5)
 	}
 
 	var unitDirection = r.Direction().Normalize()
@@ -25,6 +25,16 @@ func check(e error) {
 	if e != nil {
 		panic(e)
 	}
+}
+
+func randInUnitSpehre() mgl32.Vec3 {
+	var p mgl32.Vec3 = mgl32.Vec3{rand.Float32(), rand.Float32(), rand.Float32()}.Mul(2.0).Sub(mgl32.Vec3{1, 1, 1})
+
+	for ok := true; ok; ok = p.LenSqr() < 1.0 {
+		p = mgl32.Vec3{rand.Float32(), rand.Float32(), rand.Float32()}.Mul(2.0).Sub(mgl32.Vec3{1, 1, 1})
+	}
+
+	return p
 }
 
 func main() {
@@ -62,6 +72,7 @@ func main() {
 			}
 
 			col = col.Mul(1 / float32(ns))
+			col = mgl32.Vec3{float32(math.Sqrt(float64(col.X()))), float32(math.Sqrt(float64(col.Y()))), float32(math.Sqrt(float64(col.Z())))}
 			var ir = int(255.99 * col[0])
 			var ig = int(255.99 * col[1])
 			var ib = int(255.99 * col[2])
