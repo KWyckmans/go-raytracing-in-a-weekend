@@ -9,11 +9,19 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-func color(r Ray, world Hitable) mgl32.Vec3 {
+func color(r Ray, world Hitable, depth int) mgl32.Vec3 {
 	var rec HitRecord
 	if world.hit(r, 0.001, math.MaxFloat32, &rec) {
-		var target mgl32.Vec3 = rec.p.Add(rec.normal).Add(randInUnitSpehre())
-		return color(Ray{A: rec.p, B: target.Sub(rec.p)}, world).Mul(0.5)
+		var scattered Ray
+		var attenuation mgl32.Vec3
+
+		if depth < 50 && rec.material.Scatter(r, rec, &attenuation, &scattered) {
+			// fmt.Println("Scattering rays")
+			var col = color(scattered, world, depth+1)
+			return mgl32.Vec3{attenuation.X() * col.X(), attenuation.Y() * col.Y(), attenuation.Z() * col.Z()}
+		} else {
+			return mgl32.Vec3{0, 0, 0}
+		}
 	}
 
 	var unitDirection = r.Direction().Normalize()
@@ -55,8 +63,11 @@ func main() {
 	contents += fmt.Sprintln(255)
 
 	var list []Hitable
-	list = append(list, Sphere{center: mgl32.Vec3{0, 0, -1}, radius: 0.5})
-	list = append(list, Sphere{center: mgl32.Vec3{0, -100.5, -1}, radius: 100})
+	list = append(list, Sphere{center: mgl32.Vec3{0, 0, -1}, radius: 0.5, material: Lambertian{albedo: mgl32.Vec3{0.8, 0.3, 0.3}}})
+	list = append(list, Sphere{center: mgl32.Vec3{0, -100.5, -1}, radius: 100, material: Lambertian{albedo: mgl32.Vec3{0.8, 0.8, 0.0}}})
+	list = append(list, Sphere{center: mgl32.Vec3{1, 0, -1}, radius: 0.5, material: Metal{albedo: mgl32.Vec3{0.8, 0.6, 0.2}}})
+	list = append(list, Sphere{center: mgl32.Vec3{-1, 0, -1}, radius: 0.5, material: Metal{albedo: mgl32.Vec3{0.8, 0.8, 0.8}}})
+
 	var world HitableList = HitableList{list: list}
 
 	for j := ny - 1; j >= 0; j-- {
@@ -68,7 +79,7 @@ func main() {
 
 				var r = camera.getRay(u, v)
 				// var p mgl32.Vec3 = r.P(2.0)
-				col = col.Add(color(r, world))
+				col = col.Add(color(r, world, 0))
 			}
 
 			col = col.Mul(1 / float32(ns))

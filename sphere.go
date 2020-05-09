@@ -7,8 +7,9 @@ import (
 )
 
 type Sphere struct {
-	center mgl32.Vec3
-	radius float32
+	center   mgl32.Vec3
+	radius   float32
+	material Material
 }
 
 // NewSphere instantiates a sphere with a center and radius r
@@ -33,6 +34,7 @@ func (s Sphere) hit(r Ray, tMin float32, tMax float32, rec *HitRecord) bool {
 			rec.t = temp
 			rec.p = r.P(rec.t)
 			rec.normal = (rec.p.Sub(s.center)).Mul(1 / s.radius)
+			rec.material = s.material
 			return true
 		}
 
@@ -41,6 +43,7 @@ func (s Sphere) hit(r Ray, tMin float32, tMax float32, rec *HitRecord) bool {
 			rec.t = temp
 			rec.p = r.P(rec.t)
 			rec.normal = (rec.p.Sub(s.center)).Mul(1 / s.radius)
+			rec.material = s.material
 			return true
 		}
 	}
