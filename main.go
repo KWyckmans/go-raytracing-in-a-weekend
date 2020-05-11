@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"math"
 	"math/rand"
+	"time"
 
 	"github.com/go-gl/mathgl/mgl32"
 )
@@ -46,16 +47,11 @@ func randInUnitSpehre() mgl32.Vec3 {
 }
 
 func main() {
-	const nx int = 600
-	const ny int = 300
+	const nx int = 800
+	const ny int = 500
 	const ns int = 100
 
-	var camera Camera = Camera{
-		origin:          mgl32.Vec3{0, 0, 0},
-		lowerLeftCorner: mgl32.Vec3{-2, -1, -1},
-		horizontal:      mgl32.Vec3{4, 0, 0},
-		vertical:        mgl32.Vec3{0, 2, 0},
-	}
+	var camera = BuildCamera(mgl32.Vec3{-2, 2, 1}, mgl32.Vec3{0, 0, -1}, mgl32.Vec3{0, 1, 0}, 45, float32(nx)/float32(ny))
 
 	var contents string = ""
 	contents += "P3"
@@ -63,10 +59,11 @@ func main() {
 	contents += fmt.Sprintln(255)
 
 	var list []Hitable
-	list = append(list, Sphere{center: mgl32.Vec3{0, 0, -1}, radius: 0.5, material: Lambertian{albedo: mgl32.Vec3{0.8, 0.3, 0.3}}})
+	list = append(list, Sphere{center: mgl32.Vec3{0, 0, -1}, radius: 0.5, material: Lambertian{albedo: mgl32.Vec3{0.1, 0.2, 0.5}}})
 	list = append(list, Sphere{center: mgl32.Vec3{0, -100.5, -1}, radius: 100, material: Lambertian{albedo: mgl32.Vec3{0.8, 0.8, 0.0}}})
-	list = append(list, Sphere{center: mgl32.Vec3{1, 0, -1}, radius: 0.5, material: Metal{albedo: mgl32.Vec3{0.8, 0.6, 0.2}, fuzz: 0.3}})
-	list = append(list, Sphere{center: mgl32.Vec3{-1, 0, -1}, radius: 0.5, material: Metal{albedo: mgl32.Vec3{0.8, 0.8, 0.8}, fuzz: 1.0}})
+	list = append(list, Sphere{center: mgl32.Vec3{1, 0, -1}, radius: 0.5, material: Metal{albedo: mgl32.Vec3{0.8, 0.6, 0.2}, fuzz: 0.0}})
+	list = append(list, Sphere{center: mgl32.Vec3{-1, 0, -1}, radius: 0.5, material: Dielectric{refIdx: 1.5}})
+	// list = append(list, Sphere{center: mgl32.Vec3{-1, 0, -1}, radius: -0.45, material: Dielectric{refIdx: 1.5}})
 
 	var world HitableList = HitableList{list: list}
 
@@ -77,7 +74,7 @@ func main() {
 				var u = (float32(i) + rand.Float32()) / float32(nx)
 				var v = (float32(j) + rand.Float32()) / float32(ny)
 
-				var r = camera.getRay(u, v)
+				var r = camera.GetRay(u, v)
 				// var p mgl32.Vec3 = r.P(2.0)
 				col = col.Add(color(r, world, 0))
 			}
@@ -92,7 +89,8 @@ func main() {
 		}
 	}
 
-	err := ioutil.WriteFile("dump.ppm", []byte(contents), 0644)
+	filename := time.Now().Format("20060201-1504") + ".ppm"
+	err := ioutil.WriteFile(filename, []byte(contents), 0644)
 	check(err)
 
 	fmt.Println("Finished generating image")

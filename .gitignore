@@ -89,4 +89,4 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.gitignore.io/api/go,osx,windows,visualstudiocode
-
+2*.ppm
