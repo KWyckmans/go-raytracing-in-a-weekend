@@ -89,4 +89,6 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.gitignore.io/api/go,osx,windows,visualstudiocode
+
+# Generated images. Don't want to upload all of them, just selected ones.
 2*.ppm

@@ -46,26 +46,64 @@ func randInUnitSpehre() mgl32.Vec3 {
 	return p
 }
 
+func randomWorld() []Hitable {
+	const n int = 500
+
+	var list []Hitable
+	list = append(list, Sphere{center: mgl32.Vec3{0, -1000, 0}, radius: 1000, material: Lambertian{albedo: mgl32.Vec3{0.5, 0.5, 0.5}}})
+
+	for a := -11; a < 11; a++ {
+		for b := -11; b < 11; b++ {
+			var chooseMat float32 = rand.Float32()
+			var center mgl32.Vec3 = mgl32.Vec3{float32(a) + float32(0.9)*rand.Float32(), 0.2, float32(b) + float32(0.9)*rand.Float32()}
+
+			if (center.Sub(mgl32.Vec3{4, 0.2, 0}).Len() > 0.9) {
+				if chooseMat < 0.8 {
+					list = append(list, Sphere{center: center, radius: 0.2, material: Lambertian{mgl32.Vec3{rand.Float32() * rand.Float32(), rand.Float32() * rand.Float32(), rand.Float32() * rand.Float32()}}})
+				} else if chooseMat < 0.95 {
+					list = append(list, Sphere{center: center, radius: 0.2, material: Metal{albedo: mgl32.Vec3{float32(0.5) * (rand.Float32() + 1.0), float32(0.5) * (rand.Float32() + 1.0), float32(0.5) * (rand.Float32() + 1.0)}, fuzz: float32(0.5) * rand.Float32()}})
+				} else {
+					list = append(list, Sphere{center: center, radius: 0.2, material: Dielectric{refIdx: 1.5}})
+				}
+			}
+		}
+	}
+
+	list = append(list, Sphere{center: mgl32.Vec3{0, 1, 0}, radius: 1.0, material: Dielectric{refIdx: 1.5}})
+	list = append(list, Sphere{center: mgl32.Vec3{-4, 1, 0}, radius: 1.0, material: Lambertian{mgl32.Vec3{0.4, 0.2, 0.1}}})
+	list = append(list, Sphere{center: mgl32.Vec3{4, 1, 0}, radius: 1.0, material: Metal{mgl32.Vec3{0.7, 0.6, 0.5}, 0.0}})
+
+	return list
+}
+
 func main() {
-	const nx int = 800
-	const ny int = 500
+	const nx int = 500
+	const ny int = 400
 	const ns int = 100
 
-	var camera = BuildCamera(mgl32.Vec3{-2, 2, 1}, mgl32.Vec3{0, 0, -1}, mgl32.Vec3{0, 1, 0}, 45, float32(nx)/float32(ny))
+	var lookFrom = mgl32.Vec3{3, 3, 2}
+	var lookAt = mgl32.Vec3{0, 0, -1}
+	var distToFocus float32 = (lookFrom.Sub(lookAt)).Len()
+	var aperture float32 = 2.0
+
+	fmt.Println(lookFrom.Sub(lookAt))
+	fmt.Println("Dist to focus: ", distToFocus)
+
+	var camera = BuildCamera(lookFrom, lookAt, mgl32.Vec3{0, 1, 0}, 20, float32(nx)/float32(ny), aperture, distToFocus)
 
 	var contents string = ""
 	contents += "P3"
 	contents += fmt.Sprintln(nx, ny)
 	contents += fmt.Sprintln(255)
 
-	var list []Hitable
-	list = append(list, Sphere{center: mgl32.Vec3{0, 0, -1}, radius: 0.5, material: Lambertian{albedo: mgl32.Vec3{0.1, 0.2, 0.5}}})
-	list = append(list, Sphere{center: mgl32.Vec3{0, -100.5, -1}, radius: 100, material: Lambertian{albedo: mgl32.Vec3{0.8, 0.8, 0.0}}})
-	list = append(list, Sphere{center: mgl32.Vec3{1, 0, -1}, radius: 0.5, material: Metal{albedo: mgl32.Vec3{0.8, 0.6, 0.2}, fuzz: 0.0}})
-	list = append(list, Sphere{center: mgl32.Vec3{-1, 0, -1}, radius: 0.5, material: Dielectric{refIdx: 1.5}})
-	// list = append(list, Sphere{center: mgl32.Vec3{-1, 0, -1}, radius: -0.45, material: Dielectric{refIdx: 1.5}})
+	// var list []Hitable
+	// list = append(list, Sphere{center: mgl32.Vec3{0, 0, -1}, radius: 0.5, material: Lambertian{albedo: mgl32.Vec3{0.1, 0.2, 0.5}}})
+	// list = append(list, Sphere{center: mgl32.Vec3{0, -100.5, -1}, radius: 100, material: Lambertian{albedo: mgl32.Vec3{0.8, 0.8, 0.0}}})
+	// list = append(list, Sphere{center: mgl32.Vec3{1, 0, -1}, radius: 0.5, material: Metal{albedo: mgl32.Vec3{0.8, 0.6, 0.2}, fuzz: 0.0}})
+	// list = append(list, Sphere{center: mgl32.Vec3{-1, 0, -1}, radius: 0.5, material: Dielectric{refIdx: 1.5}})
+	// // list = append(list, Sphere{center: mgl32.Vec3{-1, 0, -1}, radius: -0.45, material: Dielectric{refIdx: 1.5}})
 
-	var world HitableList = HitableList{list: list}
+	var world HitableList = HitableList{list: randomWorld()}
 
 	for j := ny - 1; j >= 0; j-- {
 		for i := 0; i < nx; i++ {
