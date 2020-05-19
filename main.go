@@ -17,7 +17,6 @@ func color(r Ray, world Hitable, depth int) mgl32.Vec3 {
 		var attenuation mgl32.Vec3
 
 		if depth < 50 && rec.material.Scatter(r, rec, &attenuation, &scattered) {
-			// fmt.Println("Scattering rays")
 			var col = color(scattered, world, depth+1)
 			return mgl32.Vec3{attenuation.X() * col.X(), attenuation.Y() * col.Y(), attenuation.Z() * col.Z()}
 		} else {
@@ -86,22 +85,12 @@ func main() {
 	var distToFocus float32 = (lookFrom.Sub(lookAt)).Len()
 	var aperture float32 = 2.0
 
-	fmt.Println(lookFrom.Sub(lookAt))
-	fmt.Println("Dist to focus: ", distToFocus)
-
 	var camera = BuildCamera(lookFrom, lookAt, mgl32.Vec3{0, 1, 0}, 20, float32(nx)/float32(ny), aperture, distToFocus)
 
 	var contents string = ""
 	contents += "P3"
 	contents += fmt.Sprintln(nx, ny)
 	contents += fmt.Sprintln(255)
-
-	// var list []Hitable
-	// list = append(list, Sphere{center: mgl32.Vec3{0, 0, -1}, radius: 0.5, material: Lambertian{albedo: mgl32.Vec3{0.1, 0.2, 0.5}}})
-	// list = append(list, Sphere{center: mgl32.Vec3{0, -100.5, -1}, radius: 100, material: Lambertian{albedo: mgl32.Vec3{0.8, 0.8, 0.0}}})
-	// list = append(list, Sphere{center: mgl32.Vec3{1, 0, -1}, radius: 0.5, material: Metal{albedo: mgl32.Vec3{0.8, 0.6, 0.2}, fuzz: 0.0}})
-	// list = append(list, Sphere{center: mgl32.Vec3{-1, 0, -1}, radius: 0.5, material: Dielectric{refIdx: 1.5}})
-	// // list = append(list, Sphere{center: mgl32.Vec3{-1, 0, -1}, radius: -0.45, material: Dielectric{refIdx: 1.5}})
 
 	var world HitableList = HitableList{list: randomWorld()}
 
@@ -113,7 +102,6 @@ func main() {
 				var v = (float32(j) + rand.Float32()) / float32(ny)
 
 				var r = camera.GetRay(u, v)
-				// var p mgl32.Vec3 = r.P(2.0)
 				col = col.Add(color(r, world, 0))
 			}
 
